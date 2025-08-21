@@ -1,0 +1,225 @@
+import hashlib
+import time
+import json
+
+# ------------------ Blockchain Core ------------------
+class Block:
+    def __init__(self, index, data, previous_hash):
+        self.index = index
+        self.timestamp = time.ctime()
+        self.data = data
+        self.previous_hash = previous_hash
+        self.hash = self.calculate_hash()
+
+    def calculate_hash(self):
+        block_string = f"{self.index}{self.timestamp}{json.dumps(self.data)}{self.previous_hash}"
+        return hashlib.sha256(block_string.encode()).hexdigest()
+
+
+class Blockchain:
+    def __init__(self):
+        self.chain = [self.create_genesis_block()]
+
+    def create_genesis_block(self):
+        return Block(0, {"Genesis Block": "Land Registry System"}, "0")
+
+    def get_latest_block(self):
+        return self.chain[-1]
+
+    def add_block(self, new_block):
+        new_block.previous_hash = self.get_latest_block().hash
+        new_block.hash = new_block.calculate_hash()
+        self.chain.append(new_block)
+
+    def display_chain(self):
+        print("\n🔗 Blockchain Ledger:")
+        for block in self.chain:
+            print(f"Index: {block.index}")
+            print(f"Timestamp: {block.timestamp}")
+            print(f"Data: {block.data}")
+            print(f"Hash: {block.hash[:20]}...")
+            print(f"Previous Hash: {block.previous_hash[:20]}...\n")
+
+    def is_chain_valid(self):
+        for i in range(1, len(self.chain)):
+            curr = self.chain[i]
+            prev = self.chain[i - 1]
+            if curr.hash != curr.calculate_hash():
+                return False
+            if curr.previous_hash != prev.hash:
+                return False
+        return True
+
+
+# ------------------ Property & Registry ------------------
+class Property:
+    def __init__(self, property_id, owner, value):
+        self.property_id = property_id
+        self.owner = owner
+        self.value = value  # Property cost
+        self.history = []
+
+    def __str__(self):
+        return f"Property(ID={self.property_id}, Owner={self.owner}, Value={self.value})"
+
+
+class LandRegistrySystem:
+    def __init__(self):
+        self.blockchain = Blockchain()
+        self.properties = {}
+        self.wallets = {}  # owner -> balance
+
+    # ---------------- Wallet Management ----------------
+    def create_wallet(self, owner, balance=1000):
+        if owner in self.wallets:
+            print(f"❌ Wallet already exists for {owner}")
+            return
+        self.wallets[owner] = balance
+        print(f"💰 Wallet created for {owner} with balance {balance}")
+
+    def show_wallets(self):
+        print("\n💳 Wallet Balances:")
+        for owner, balance in self.wallets.items():
+            print(f"{owner}: {balance}")
+
+    # ---------------- Property Registration ----------------
+    def register_property(self, property_id, owner, value):
+        if property_id in self.properties:
+            print(f"❌ Property ID {property_id} already exists.")
+            return
+
+        if owner not in self.wallets:
+            print(f"❌ Owner {owner} does not have a wallet. Create one first.")
+            return
+
+        prop = Property(property_id, owner, value)
+        self.properties[property_id] = prop
+
+        transaction = {
+            "action": "REGISTER",
+            "property_id": property_id,
+            "new_owner": owner,
+            "value": value,
+            "timestamp": time.ctime()
+        }
+
+        new_block = Block(len(self.blockchain.chain), transaction, self.blockchain.get_latest_block().hash)
+        self.blockchain.add_block(new_block)
+
+        prop.history.append(transaction)
+
+        print(f"✅ Property '{property_id}' registered to {owner} worth {value}")
+
+    # ---------------- Ownership Transfer ----------------
+    def transfer_property(self, property_id, current_owner, new_owner):
+        if property_id not in self.properties:
+            print(f"❌ Property {property_id} not found.")
+            return
+
+        prop = self.properties[property_id]
+
+        if prop.owner != current_owner:
+            print(f"❌ Transfer failed: Current owner mismatch! ({prop.owner} is the actual owner)")
+            return
+
+        if new_owner not in self.wallets:
+            print(f"❌ Buyer {new_owner} does not have a wallet.")
+            return
+
+        if self.wallets[new_owner] < prop.value:
+            print(f"❌ Transfer failed: {new_owner} has insufficient balance.")
+            return
+
+        # Perform Payment
+        self.wallets[new_owner] -= prop.value
+        self.wallets[current_owner] += prop.value
+
+        # Update ownership
+        prop.owner = new_owner
+
+        transaction = {
+            "action": "TRANSFER",
+            "property_id": property_id,
+            "from": current_owner,
+            "to": new_owner,
+            "value": prop.value,
+            "timestamp": time.ctime()
+        }
+
+        new_block = Block(len(self.blockchain.chain), transaction, self.blockchain.get_latest_block().hash)
+        self.blockchain.add_block(new_block)
+
+        prop.history.append(transaction)
+
+        print(f"🔄 Property '{property_id}' transferred from {current_owner} to {new_owner} for {prop.value}")
+
+    # ---------------- View Property History ----------------
+    def view_history(self, property_id):
+        if property_id not in self.properties:
+            print(f"❌ Property {property_id} not found.")
+            return
+        print(f"\n📜 Ownership history for {property_id}:")
+        for tx in self.properties[property_id].history:
+            print(tx)
+
+
+# ------------------ Interactive CLI ------------------
+if __name__ == "__main__":
+    system = LandRegistrySystem()
+    exit_symbol = "."
+
+    print("\n🏠 Welcome to Blockchain-based Land Registry System with Payments")
+    print(f"Type '{exit_symbol}' anytime to exit.\n")
+
+    while True:
+        print("\nOptions:")
+        print("1. Create Wallet")
+        print("2. Show Wallets")
+        print("3. Register Property")
+        print("4. Transfer Property (with Payment)")
+        print("5. View Property History")
+        print("6. Show Blockchain Ledger")
+        print(f"Type '{exit_symbol}' to Exit\n")
+
+        choice = input("Enter option number: ").strip()
+        if choice == exit_symbol:
+            print("👋 Exiting system.")
+            break
+
+        if choice == "1":
+            owner = input("Enter Owner Name: ").strip()
+            if owner == exit_symbol: continue
+            balance = int(input("Enter Initial Balance: "))
+            system.create_wallet(owner, balance)
+
+        elif choice == "2":
+            system.show_wallets()
+
+        elif choice == "3":
+            pid = input("Enter Property ID: ").strip()
+            if pid == exit_symbol: continue
+            owner = input("Enter Owner Name: ").strip()
+            if owner == exit_symbol: continue
+            value = int(input("Enter Property Value: "))
+            system.register_property(pid, owner, value)
+
+        elif choice == "4":
+            pid = input("Enter Property ID: ").strip()
+            if pid == exit_symbol: continue
+            curr_owner = input("Enter Current Owner Name: ").strip()
+            if curr_owner == exit_symbol: continue
+            new_owner = input("Enter New Owner Name: ").strip()
+            if new_owner == exit_symbol: continue
+            system.transfer_property(pid, curr_owner, new_owner)
+
+        elif choice == "5":
+            pid = input("Enter Property ID: ").strip()
+            if pid == exit_symbol: continue
+            system.view_history(pid)
+
+        elif choice == "6":
+            system.blockchain.display_chain()
+            print(f"✅ Blockchain valid? {system.blockchain.is_chain_valid()}")
+
+        else:
+            print("❌ Invalid option. Try again.")
