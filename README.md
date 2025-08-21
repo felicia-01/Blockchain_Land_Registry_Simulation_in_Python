@@ -1,12 +1,12 @@
 
-🏠  #Blockchain Land Registry System (Python Simulation)
+🏠  # Blockchain Land Registry System (Python Simulation)
 A Python-based Blockchain Land Registry System that ensures secure, transparent, and tamper-proof property transactions using blockchain technology.
 
-📌 ##Overview
+📌 ## Overview
 This is a Python-based Blockchain Land Registry System that makes land ownership records secure, transparent, and tamper-proof.
 It shows how blockchain can solve real-world problems in property management.
 
-❓ ##Problem Statement
+❓ ## Problem Statement
 
 **Traditional land registry systems face issues like:**
 📝 Paper-based/manual records → easy to lose or damage.
@@ -15,7 +15,7 @@ It shows how blockchain can solve real-world problems in property management.
 🐢 Slow transfer process.
 👉 To fix this, blockchain can store each land/property record in an immutable ledger, ensuring authenticity, trust, and transparency.
 
-🚀 ##Features
+🚀 ## Features
 
 **👤 User Features**
 Property Registration – Register land with unique ID, owner, and location.
@@ -29,7 +29,7 @@ Tamper Detection – Any change breaks the chain (SHA-256 based).
 Proof-of-Work (basic) – Ensures valid block creation.
 Role-Based Access – Only the current owner can transfer property.
 
-💻 ##Tech Stack
+💻 ## Tech Stack
 
 Language: **Python** 🐍
 Libraries:
@@ -38,7 +38,7 @@ Libraries:
 **time** → timestamps
 **uuid** → unique property/transaction IDs
 
-🔎 ##How It Works
+🔎 ## How It Works
 
 1️⃣ Property Registration
 A land parcel is added with details (ID, owner, size, location).
@@ -54,7 +54,7 @@ Blocks are linked with hashes → ensures immutability.
 Entire chain shows property history.
 Data cannot be secretly changed.
 
-🔮 ##Future Scope
+🔮 ## Future Scope
 
 **Smart Contracts** – Automate land transfers securely without middlemen.
 **Govt & Legal Integration** – Make blockchain-based records legally valid.
